@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import image from '../assets/Icon.png';
 import { Settings, FileText, Package, ShoppingCart, LayoutDashboard, LogOut, Wifi, WifiOff, Bell } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
-import { useLocation } from 'react-router-dom';
+
 
 const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
     { id: 1, name: 'Tableau de bord', path: '/', icon: LayoutDashboard },
-    { id: 2, name: 'Caisse (POS)', path: '/pos', icon: ShoppingCart },
-    { id: 3, name: 'Produits et Stock', path: '/products', icon: Package },
-    { id: 4, name: 'Factures', path: '/invoices', icon: FileText },
+    { id: 2, name: 'Caisse (POS)', path: '/caisse', icon: ShoppingCart },
+    { id: 3, name: 'Produits et Stock', path: '/produit', icon: Package },
+    { id: 4, name: 'Factures', path: '/facture', icon: FileText },
     { id: 5, name: 'Parametres', path: '/settings', icon: Settings },
   ];
 
@@ -26,17 +27,17 @@ const Sidebar = () => {
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
-            <div
-              key={item.id} // ✅ fix: unique key
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group cursor-pointer ${
-                isActive
+            <Link
+              key={item.id}
+              to={item.path}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group cursor-pointer ${isActive
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50 translate-x-1'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white hover:translate-x-1'
-              }`}
+                }`}
             >
               <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-white'}`} />
               <span className="font-medium">{item.name}</span>
-            </div>
+            </Link>
           );
         })}
       </nav>
@@ -79,9 +80,8 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-6">
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-          isOnline ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-        }`}>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${isOnline ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+          }`}>
           {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
           <span>{isOnline ? 'En ligne' : 'Hors ligne'}</span>
         </div>

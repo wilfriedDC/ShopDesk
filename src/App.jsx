@@ -5,7 +5,10 @@ import { useAuth } from './context/useAuth';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-
+import Caisse from './pages/Caisse';
+import Produit_stock from './pages/Produit_stock';
+import Facture from './pages/Facture';
+import Settings from './assets/Settings';
 // Protects routes — redirects to /login if not logged in
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -15,22 +18,19 @@ const ProtectedRoute = ({ children }) => {
 const App = () => {
   return (
     <Routes>
-      {/* Public route */}
       <Route path="/login" element={<Login />} />
 
-      {/* Protected routes */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Layout>
-            <Dashboard />
-          </Layout>
-        </ProtectedRoute>
-      } />
+      <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+      <Route path="/caisse" element={<ProtectedRoute><Layout><Caisse /></Layout></ProtectedRoute>} />
+      <Route path='/facture' element={<ProtectedRoute><Layout><Facture/></Layout></ProtectedRoute>} />
+      <Route path='/produit' element={<ProtectedRoute><Layout><Produit_stock/></Layout></ProtectedRoute>} />
+      <Route path='/settings' element={<ProtectedRoute><Layout><Settings/></Layout></ProtectedRoute>} />
 
-      {/* Catch all → redirect to login */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );
 };
+
+
 
 export default App;
