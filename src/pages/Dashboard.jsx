@@ -1,43 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/storeContext';
 import {
-  DollarSign,
-  Package,
-  AlertTriangle,
-  ShoppingBag,
-  ArrowUpRight,
-  ArrowDownRight,
+  DollarSign, Package, AlertTriangle, ShoppingBag,
+  ArrowUpRight, ArrowDownRight,
 } from 'lucide-react';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
 } from 'recharts';
 
-// ─── Mock data graphique (remplace par vraies données quand l'API est prête) ──
-const mockChartData = [
-  { name: 'Lun', sales: 4000 },
-  { name: 'Mar', sales: 3000 },
-  { name: 'Mer', sales: 2000 },
-  { name: 'Jeu', sales: 2780 },
-  { name: 'Ven', sales: 1890 },
-  { name: 'Sam', sales: 2390 },
-  { name: 'Dim', sales: 3490 },
+const donnéesGraphique = [
+  { nom: 'Lun', ventes: 4000 },
+  { nom: 'Mar', ventes: 3000 },
+  { nom: 'Mer', ventes: 2000 },
+  { nom: 'Jeu', ventes: 2780 },
+  { nom: 'Ven', ventes: 1890 },
+  { nom: 'Sam', ventes: 2390 },
+  { nom: 'Dim', ventes: 3490 },
 ];
 
-// ════════════════════════════════════════════════════════════════════════════
-// SKELETONS
-// ════════════════════════════════════════════════════════════════════════════
+// ── Skeletons ────────────────────────────────────────────────────────────────
 
 const Pulse = ({ className }) => (
   <div className={`bg-slate-200 rounded animate-pulse ${className}`} />
 );
 
-const StatCardSkeleton = () => (
+const SkeletonCarte = () => (
   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
     <div className="flex justify-between items-start">
       <div className="space-y-2">
@@ -52,7 +40,7 @@ const StatCardSkeleton = () => (
   </div>
 );
 
-const ChartSkeleton = () => (
+const SkeletonGraphique = () => (
   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
     <div className="flex justify-between items-center mb-6">
       <Pulse className="h-5 w-44" />
@@ -66,7 +54,7 @@ const ChartSkeleton = () => (
   </div>
 );
 
-const RecentSalesSkeleton = () => (
+const SkeletonVentesRecentes = () => (
   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-full">
     <div className="flex justify-between items-center mb-6">
       <Pulse className="h-5 w-36" />
@@ -92,31 +80,29 @@ const RecentSalesSkeleton = () => (
   </div>
 );
 
-// ════════════════════════════════════════════════════════════════════════════
-// COMPOSANTS RÉELS
-// ════════════════════════════════════════════════════════════════════════════
+// ── Composants réels ─────────────────────────────────────────────────────────
 
-const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }) => (
+const CarteStat = ({ titre, valeur, icone: Icone, tendance, valeurTendance, couleur }) => (
   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
     <div className="flex justify-between items-start">
       <div>
-        <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
+        <p className="text-sm font-medium text-slate-500 mb-1">{titre}</p>
+        <h3 className="text-2xl font-bold text-slate-800">{valeur}</h3>
       </div>
-      <div className={`p-3 rounded-xl ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
+      <div className={`p-3 rounded-xl ${couleur}`}>
+        <Icone className="w-6 h-6 text-white" />
       </div>
     </div>
     <div className="mt-4 flex items-center gap-2 text-sm">
-      {trend === 'up' ? (
+      {tendance === 'hausse' ? (
         <span className="text-green-600 flex items-center font-medium bg-green-50 px-2 py-0.5 rounded-full">
           <ArrowUpRight className="w-4 h-4 mr-1" />
-          {trendValue}
+          {valeurTendance}
         </span>
       ) : (
         <span className="text-red-600 flex items-center font-medium bg-red-50 px-2 py-0.5 rounded-full">
           <ArrowDownRight className="w-4 h-4 mr-1" />
-          {trendValue}
+          {valeurTendance}
         </span>
       )}
       <span className="text-slate-400">vs hier</span>
@@ -124,8 +110,8 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, color }) => (
   </div>
 );
 
-const RecentSales = ({ invoices }) => {
-  const recent = invoices.slice(0, 5);
+const VentesRecentes = ({ factures }) => {
+  const recentes = factures.slice(0, 5);
   return (
     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-full">
       <div className="flex justify-between items-center mb-6">
@@ -135,33 +121,33 @@ const RecentSales = ({ invoices }) => {
         </button>
       </div>
       <div className="space-y-4">
-        {recent.length === 0 ? (
+        {recentes.length === 0 ? (
           <p className="text-slate-500 text-center py-8">Aucune vente récente</p>
         ) : (
-          recent.map((inv) => (
+          recentes.map((facture) => (
             <div
-              key={inv.id}
+              key={facture.id}
               className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                  {inv.items.length}
+                  {facture.items.length}
                 </div>
                 <div>
-                  <p className="font-medium text-slate-800">Facture #{inv.id.slice(-4)}</p>
+                  <p className="font-medium text-slate-800">Facture #{facture.id.slice(-4)}</p>
                   <p className="text-xs text-slate-500">
-                    {new Date(inv.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(facture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-bold text-slate-800">{inv.total.toFixed(2)} €</p>
+                <p className="font-bold text-slate-800">{facture.total.toFixed(2)} Ar</p>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  inv.status === 'paid'
+                  facture.statut === 'payée'
                     ? 'text-green-600 bg-green-50'
                     : 'text-orange-600 bg-orange-50'
                 }`}>
-                  {inv.status === 'paid' ? 'Payé' : 'En attente'}
+                  {facture.statut === 'payée' ? 'Payée' : 'En attente'}
                 </span>
               </div>
             </div>
@@ -172,33 +158,26 @@ const RecentSales = ({ invoices }) => {
   );
 };
 
-// ════════════════════════════════════════════════════════════════════════════
-// DASHBOARD PRINCIPAL
-// ════════════════════════════════════════════════════════════════════════════
+// ── Dashboard principal ───────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const { products, invoices } = useStore();
-
-  // Les données viennent du localStorage (sync), mais on attend
-  // le premier render pour éviter le flash de contenu vide.
-  const [isLoading, setIsLoading] = useState(true);
+  const { produits, factures } = useStore();
+  const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
-    // requestAnimationFrame garantit que le DOM est prêt avant d'afficher les données
-    const raf = requestAnimationFrame(() => setIsLoading(false));
+    const raf = requestAnimationFrame(() => setChargement(false));
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // ── Calculs depuis le contexte ────────────────────────────────────────────
-  const totalSales     = invoices.reduce((acc, inv) => acc + inv.total, 0);
-  const lowStockCount  = products.filter((p) => p.stock <= p.minStock).length;
-  const totalProducts  = products.length;
-  const averageCart    = invoices.length > 0 ? totalSales / invoices.length : 0;
+  const totalVentes    = factures.reduce((acc, f) => acc + f.total, 0);
+  const stockBas       = produits.filter((p) => p.stock <= p.minStock).length;
+  const totalProduits  = produits.length;
+  const panierMoyen    = factures.length > 0 ? totalVentes / factures.length : 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {/* ── En-tête ─────────────────────────────────────────────────────── */}
+      {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Tableau de Bord</h1>
@@ -214,60 +193,28 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Cartes stats ─────────────────────────────────────────────────── */}
+      {/* Cartes stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {isLoading ? (
-          Array(4).fill(0).map((_, i) => <StatCardSkeleton key={i} />)
+        {chargement ? (
+          Array(4).fill(0).map((_, i) => <SkeletonCarte key={i} />)
         ) : (
           <>
-            <StatCard
-              title="Ventes Totales"
-              value={`${totalSales.toFixed(2)} €`}
-              icon={DollarSign}
-              trend="up"
-              trendValue="+12.5%"
-              color="bg-blue-500"
-            />
-            <StatCard
-              title="Produits en Stock"
-              value={totalProducts}
-              icon={Package}
-              trend="up"
-              trendValue="+4"
-              color="bg-purple-500"
-            />
-            <StatCard
-              title="Alertes Stock Bas"
-              value={lowStockCount}
-              icon={AlertTriangle}
-              trend={lowStockCount > 0 ? 'down' : 'up'}
-              trendValue={lowStockCount > 0 ? `-${lowStockCount}` : '0'}
-              color="bg-orange-500"
-            />
-            <StatCard
-              title="Panier Moyen"
-              value={`${averageCart.toFixed(2)} €`}
-              icon={ShoppingBag}
-              trend="up"
-              trendValue="+3.2%"
-              color="bg-emerald-500"
-            />
+            <CarteStat titre="Ventes Totales"    valeur={`Ar ${totalVentes.toFixed(2)}`}   icone={DollarSign}    tendance="hausse" valeurTendance="+12.5%" couleur="bg-blue-500" />
+            <CarteStat titre="Produits en Stock" valeur={totalProduits}                     icone={Package}       tendance="hausse" valeurTendance="+4"     couleur="bg-purple-500" />
+            <CarteStat titre="Alertes Stock Bas" valeur={stockBas}                          icone={AlertTriangle} tendance={stockBas > 0 ? 'baisse' : 'hausse'} valeurTendance={stockBas > 0 ? `-${stockBas}` : '0'} couleur="bg-orange-500" />
+            <CarteStat titre="Panier Moyen"      valeur={`Ar ${panierMoyen.toFixed(2)}`}   icone={ShoppingBag}   tendance="hausse" valeurTendance="+3.2%"  couleur="bg-emerald-500" />
           </>
         )}
       </div>
 
-      {/* ── Graphique + Ventes récentes ──────────────────────────────────── */}
+      {/* Graphique + Ventes récentes */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* Graphique */}
         <div className="lg:col-span-2">
-          {isLoading ? (
-            <ChartSkeleton />
-          ) : (
+          {chargement ? <SkeletonGraphique /> : (
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-lg text-slate-800">Évolution des Ventes</h3>
-                <select className="border border-slate-200 rounded-lg text-sm text-slate-600 px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                <select className="border border-slate-200 rounded-lg text-sm text-slate-600 px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none">
                   <option>7 derniers jours</option>
                   <option>30 derniers jours</option>
                   <option>Cette année</option>
@@ -275,42 +222,18 @@ export default function Dashboard() {
               </div>
               <div className="h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mockChartData}>
+                  <AreaChart data={donnéesGraphique}>
                     <defs>
-                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.12} />
+                      <linearGradient id="couleurVentes" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.12} />
                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#64748b', fontSize: 12 }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#64748b', fontSize: 12 }}
-                      dx={-10}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: '12px',
-                        border: 'none',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="sales"
-                      stroke="#3b82f6"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorSales)"
-                    />
+                    <XAxis dataKey="nom"    axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                    <YAxis                  axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dx={-10} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                    <Area type="monotone" dataKey="ventes" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#couleurVentes)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -318,15 +241,9 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Ventes récentes */}
         <div className="lg:col-span-1">
-          {isLoading ? (
-            <RecentSalesSkeleton />
-          ) : (
-            <RecentSales invoices={invoices} />
-          )}
+          {chargement ? <SkeletonVentesRecentes /> : <VentesRecentes factures={factures} />}
         </div>
-
       </div>
     </div>
   );
