@@ -4,11 +4,11 @@ import { toast } from 'sonner';
 const StoreContext = createContext(undefined);
 
 const PRODUITS_INITIAUX = [
-  { id: '1', name: 'Riz (5kg)',             category: 'Alimentation', price: 12.50, stock: 45,  minStock: 10 },
-  { id: '2', name: "Huile d'Olive (1L)",    category: 'Alimentation', price: 8.90,  stock: 12,  minStock: 15 },
-  { id: '3', name: 'Café Moulu (250g)',      category: 'Boissons',     price: 3.45,  stock: 8,   minStock: 10 },
-  { id: '4', name: 'Savon de Marseille',     category: 'Hygiène',      price: 2.10,  stock: 30,  minStock: 5  },
-  { id: '5', name: 'Pâtes Penne (500g)',     category: 'Alimentation', price: 1.20,  stock: 100, minStock: 20 },
+  { id: '1', name: 'Riz (1kg)',             category: 'Alimentation', price: 3000, stock: 45,  minStock: 10 },
+  { id: '2', name: "Huile d'Olive (1L)",    category: 'Alimentation', price: 10000,  stock: 12,  minStock: 15 },
+  { id: '3', name: 'Café Moulu (250g)',      category: 'Boissons',     price: 1000,  stock: 8,   minStock: 10 },
+  { id: '4', name: 'Savon Nosy',     category: 'Hygiène',      price: 2000,  stock: 30,  minStock: 5  },
+  { id: '5', name: 'Pâtes Penne (500g)',     category: 'Alimentation', price: 4920,  stock: 100, minStock: 20 },
 ];
 
 export function StoreProvider({ children }) {
