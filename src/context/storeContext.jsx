@@ -1,150 +1,1353 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect
+} from "react";
+
+import { toast } from "sonner";
+
+
+/*
+=========================================
+CONFIGURATION API
+=========================================
+*/
+
+const API_URL = "http://localhost/shopdesk-api/api";
+
+
+/*
+=========================================
+CREATION CONTEXT
+=========================================
+*/
 
 const StoreContext = createContext(undefined);
 
-const PRODUITS_INITIAUX = [
-  { id: '1', name: 'Riz (1kg)',             category: 'Alimentation', price: 3000, stock: 45,  minStock: 10 },
-  { id: '2', name: "Huile d'Olive (1L)",    category: 'Alimentation', price: 10000,  stock: 12,  minStock: 15 },
-  { id: '3', name: 'Café Moulu (250g)',      category: 'Boissons',     price: 1000,  stock: 8,   minStock: 10 },
-  { id: '4', name: 'Savon Nosy',     category: 'Hygiène',      price: 2000,  stock: 30,  minStock: 5  },
-  { id: '5', name: 'Pâtes Penne (500g)',     category: 'Alimentation', price: 4920,  stock: 100, minStock: 20 },
-];
+
+/*
+=========================================
+STORE PROVIDER
+=========================================
+*/
 
 export function StoreProvider({ children }) {
-  const [produits, setProduits] = useState(() => {
-    const sauvegarde = localStorage.getItem('shopdesk_produits');
-    return sauvegarde ? JSON.parse(sauvegarde) : PRODUITS_INITIAUX;
-  });
 
-  const [factures, setFactures] = useState(() => {
-    const sauvegarde = localStorage.getItem('shopdesk_factures');
-    return sauvegarde ? JSON.parse(sauvegarde) : [];
-  });
+
+  /*
+  =========================================
+  STATES
+  =========================================
+  */
+
+  const [produits, setProduits] = useState([]);
+
+  const [factures, setFactures] = useState([]);
 
   const [panier, setPanier] = useState([]);
-  const [estEnLigne, setEstEnLigne] = useState(navigator.onLine);
+
+  const [chargementProduits, setChargementProduits] =
+    useState(true);
+
+  const [chargementFactures, setChargementFactures] =
+    useState(true);
+
+  const [estEnLigne, setEstEnLigne] =
+    useState(navigator.onLine);
+
+
+  /*
+  =========================================
+  CHARGER LES PRODUITS
+  =========================================
+  */
+
+  const chargerProduits = async () => {
+
+    try {
+
+      setChargementProduits(true);
+
+
+      const response = await fetch(
+        `${API_URL}/products.php`
+      );
+
+
+      const result = await response.json();
+
+
+      console.log(
+        "Produits API :",
+        result
+      );
+
+
+      if (result.success) {
+
+        const produitsFormates =
+          result.data.map((produit) => ({
+
+            id:
+              produit.id,
+
+            name:
+              produit.name,
+
+            category:
+              produit.category,
+
+            price:
+              Number(produit.price),
+
+            stock:
+              Number(produit.stock),
+
+            minStock:
+              Number(produit.min_stock)
+
+          }));
+
+
+        setProduits(
+          produitsFormates
+        );
+
+
+      } else {
+
+        toast.error(
+          result.message ||
+          "Impossible de charger les produits"
+        );
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "Erreur chargement produits :",
+        error
+      );
+
+
+      toast.error(
+        "Impossible de se connecter au serveur"
+      );
+
+
+    } finally {
+
+      setChargementProduits(false);
+
+    }
+
+  };
+
+
+  /*
+  =========================================
+  CHARGER LES VENTES
+  =========================================
+  */
+
+  const chargerFactures = async () => {
+
+    try {
+
+      setChargementFactures(true);
+
+
+      const response = await fetch(
+        `${API_URL}/sales.php`
+      );
+
+
+      const result = await response.json();
+
+
+      console.log(
+        "Ventes API :",
+        result
+      );
+
+
+      if (result.success) {
+
+
+        const facturesFormatees =
+          result.data.map((vente) => ({
+
+            /*
+            ----------------------
+            ID
+            ----------------------
+            */
+
+            id:
+              vente.id,
+
+
+            /*
+            ----------------------
+            DATE
+            ----------------------
+            */
+
+            date:
+              vente.created_at ||
+              vente.date,
+
+
+            /*
+            ----------------------
+            ARTICLES
+            ----------------------
+            */
+
+            items:
+              vente.items || [],
+
+
+            /*
+            ----------------------
+            TOTAUX
+            ----------------------
+            */
+
+            subtotal:
+              Number(
+                vente.subtotal || 0
+              ),
+
+            tax:
+              Number(
+                vente.tax || 0
+              ),
+
+            total:
+              Number(
+                vente.total || 0
+              ),
+
+
+            /*
+            ----------------------
+            PAIEMENT
+            ----------------------
+            */
+
+            paymentMethod:
+              vente.payment_method ||
+              vente.paymentMethod,
+
+
+            /*
+            ----------------------
+            STATUT
+            ----------------------
+            */
+
+            statut:
+              vente.status ||
+              vente.statut ||
+              "payée"
+
+          }));
+
+
+        setFactures(
+          facturesFormatees
+        );
+
+
+      } else {
+
+        console.error(
+          result.message
+        );
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "Erreur chargement ventes :",
+        error
+      );
+
+
+    } finally {
+
+      setChargementFactures(
+        false
+      );
+
+    }
+
+  };
+
+
+  /*
+  =========================================
+  CHARGER DONNEES AU DEMARRAGE
+  =========================================
+  */
 
   useEffect(() => {
-    localStorage.setItem('shopdesk_produits', JSON.stringify(produits));
-  }, [produits]);
 
-  useEffect(() => {
-    localStorage.setItem('shopdesk_factures', JSON.stringify(factures));
-  }, [factures]);
+    chargerProduits();
 
-  useEffect(() => {
-    const gererEnLigne  = () => setEstEnLigne(true);
-    const gererHorsLigne = () => setEstEnLigne(false);
-    window.addEventListener('online',  gererEnLigne);
-    window.addEventListener('offline', gererHorsLigne);
-    return () => {
-      window.removeEventListener('online',  gererEnLigne);
-      window.removeEventListener('offline', gererHorsLigne);
-    };
+    chargerFactures();
+
   }, []);
 
-  const ajouterProduit = (produit) => {
-    const nouveauProduit = { ...produit, id: Math.random().toString(36).substring(2, 9) };
-    setProduits([...produits, nouveauProduit]);
-    toast.success('Produit ajouté avec succès');
-  };
 
-  const modifierProduit = (id, modifications) => {
-    setProduits(produits.map(p => p.id === id ? { ...p, ...modifications } : p));
-    toast.success('Produit mis à jour');
-  };
+  /*
+  =========================================
+  DETECTER INTERNET
+  =========================================
+  */
 
-  const supprimerProduit = (id) => {
-    setProduits(produits.filter(p => p.id !== id));
-    toast.success('Produit supprimé');
-  };
+  useEffect(() => {
 
-  const ajouterAuPanier = (produit) => {
-    setPanier(prev => {
-      const existant = prev.find(item => item.produitId === produit.id);
-      if (existant) {
-        if (existant.quantite >= produit.stock) {
-          toast.error('Stock insuffisant');
-          return prev;
-        }
-        return prev.map(item =>
-          item.produitId === produit.id
-            ? { ...item, quantite: item.quantite + 1, total: (item.quantite + 1) * item.prix }
-            : item
-        );
-      }
-      return [...prev, {
-        produitId: produit.id,
-        nom:       produit.name,
-        prix:      produit.price,
-        quantite:  1,
-        total:     produit.price,
-      }];
-    });
-  };
 
-  const retirerDuPanier = (produitId) => {
-    setPanier(prev => prev.filter(item => item.produitId !== produitId));
-  };
+    const gererEnLigne = () => {
 
-  const modifierQuantitePanier = (produitId, quantite) => {
-    if (quantite <= 0) {
-      retirerDuPanier(produitId);
-      return;
-    }
-    const produit = produits.find(p => p.id === produitId);
-    if (produit && quantite > produit.stock) {
-      toast.error(`Stock insuffisant (Max: ${produit.stock})`);
-      return;
-    }
-    setPanier(prev => prev.map(item =>
-      item.produitId === produitId
-        ? { ...item, quantite, total: quantite * item.prix }
-        : item
-    ));
-  };
+      setEstEnLigne(true);
 
-  const viderPanier = () => setPanier([]);
+      toast.success(
+        "Connexion Internet rétablie"
+      );
 
-  const finaliserVente = () => {
-    if (panier.length === 0) return null;
-
-    const total = panier.reduce((somme, item) => somme + item.total, 0);
-    const nouvelleFacture = {
-      id:     Date.now().toString(),
-      date:   new Date().toISOString(),
-      items:  panier,
-      total,
-      statut: 'payée',
     };
 
-    const nouveauxProduits = produits.map(p => {
-      const itemPanier = panier.find(c => c.produitId === p.id);
-      return itemPanier ? { ...p, stock: p.stock - itemPanier.quantite } : p;
-    });
 
-    setProduits(nouveauxProduits);
-    setFactures([nouvelleFacture, ...factures]);
-    setPanier([]);
-    toast.success('Vente terminée et facture générée !');
-    return nouvelleFacture.id;
-  };
+    const gererHorsLigne = () => {
+
+      setEstEnLigne(false);
+
+      toast.error(
+        "Vous êtes hors ligne"
+      );
+
+    };
+
+
+    window.addEventListener(
+      "online",
+      gererEnLigne
+    );
+
+
+    window.addEventListener(
+      "offline",
+      gererHorsLigne
+    );
+
+
+    return () => {
+
+      window.removeEventListener(
+        "online",
+        gererEnLigne
+      );
+
+
+      window.removeEventListener(
+        "offline",
+        gererHorsLigne
+      );
+
+    };
+
+
+  }, []);
+
+
+
+  /*
+  =========================================
+  AJOUTER PRODUIT
+  =========================================
+  */
+
+  const ajouterProduit =
+    async (produit) => {
+
+      try {
+
+
+        const response =
+          await fetch(
+
+            `${API_URL}/products.php`,
+
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  name:
+                    produit.name,
+
+                  category:
+                    produit.category,
+
+                  price:
+                    Number(produit.price),
+
+                  stock:
+                    Number(produit.stock),
+
+                  minStock:
+                    Number(produit.minStock)
+
+                })
+
+            }
+
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!result.success) {
+
+          toast.error(
+            result.message ||
+            "Erreur ajout produit"
+          );
+
+          return false;
+
+        }
+
+
+        await chargerProduits();
+
+
+        toast.success(
+          "Produit ajouté avec succès"
+        );
+
+
+        return true;
+
+
+      } catch (error) {
+
+        console.error(
+          "Erreur ajout produit :",
+          error
+        );
+
+
+        toast.error(
+          "Impossible d'ajouter le produit"
+        );
+
+
+        return false;
+
+      }
+
+    };
+
+
+
+  /*
+  =========================================
+  MODIFIER PRODUIT
+  =========================================
+  */
+
+  const modifierProduit =
+    async (id, modifications) => {
+
+      try {
+
+
+        const response =
+          await fetch(
+
+            `${API_URL}/products.php?id=${id}`,
+
+            {
+
+              method: "PUT",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  name:
+                    modifications.name,
+
+                  category:
+                    modifications.category,
+
+                  price:
+                    Number(
+                      modifications.price
+                    ),
+
+                  stock:
+                    Number(
+                      modifications.stock
+                    ),
+
+                  minStock:
+                    Number(
+                      modifications.minStock
+                    )
+
+                })
+
+            }
+
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!result.success) {
+
+          toast.error(
+            result.message ||
+            "Erreur modification"
+          );
+
+          return false;
+
+        }
+
+
+        await chargerProduits();
+
+
+        toast.success(
+          "Produit mis à jour"
+        );
+
+
+        return true;
+
+
+      } catch (error) {
+
+        console.error(
+          "Erreur modification produit :",
+          error
+        );
+
+
+        toast.error(
+          "Impossible de modifier le produit"
+        );
+
+
+        return false;
+
+      }
+
+    };
+
+
+
+  /*
+  =========================================
+  SUPPRIMER PRODUIT
+  =========================================
+  */
+
+  const supprimerProduit =
+    async (id) => {
+
+      try {
+
+
+        const response =
+          await fetch(
+
+            `${API_URL}/products.php?id=${id}`,
+
+            {
+
+              method:
+                "DELETE"
+
+            }
+
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!result.success) {
+
+          toast.error(
+            result.message ||
+            "Erreur suppression"
+          );
+
+          return false;
+
+        }
+
+
+        await chargerProduits();
+
+
+        toast.success(
+          "Produit supprimé"
+        );
+
+
+        return true;
+
+
+      } catch (error) {
+
+        console.error(
+          "Erreur suppression produit :",
+          error
+        );
+
+
+        toast.error(
+          "Impossible de supprimer le produit"
+        );
+
+
+        return false;
+
+      }
+
+    };
+
+
+
+  /*
+  =========================================
+  AJOUTER AU PANIER
+  =========================================
+  */
+
+  const ajouterAuPanier =
+    (produit) => {
+
+
+      setPanier(
+        (ancienPanier) => {
+
+
+          /*
+          ==============================
+          VERIFIER STOCK
+          ==============================
+          */
+
+          if (
+            produit.stock <= 0
+          ) {
+
+            toast.error(
+              "Produit en rupture de stock"
+            );
+
+            return ancienPanier;
+
+          }
+
+
+          /*
+          ==============================
+          PRODUIT DEJA DANS PANIER
+          ==============================
+          */
+
+          const existant =
+            ancienPanier.find(
+              (item) =>
+                String(
+                  item.produitId
+                ) ===
+                String(
+                  produit.id
+                )
+            );
+
+
+          if (existant) {
+
+
+            if (
+              existant.quantite >=
+              produit.stock
+            ) {
+
+              toast.error(
+                "Stock insuffisant"
+              );
+
+              return ancienPanier;
+
+            }
+
+
+            return ancienPanier.map(
+              (item) =>
+
+                String(
+                  item.produitId
+                ) ===
+                String(
+                  produit.id
+                )
+
+                  ? {
+
+                      ...item,
+
+                      quantite:
+                        item.quantite + 1,
+
+                      total:
+                        (
+                          item.quantite + 1
+                        ) *
+                        item.prix
+
+                    }
+
+                  : item
+
+            );
+
+          }
+
+
+          /*
+          ==============================
+          AJOUTER NOUVEL ARTICLE
+          ==============================
+          */
+
+          return [
+
+            ...ancienPanier,
+
+            {
+
+              produitId:
+                produit.id,
+
+              nom:
+                produit.name,
+
+              prix:
+                Number(
+                  produit.price
+                ),
+
+              quantite:
+                1,
+
+              total:
+                Number(
+                  produit.price
+                )
+
+            }
+
+          ];
+
+        }
+
+      );
+
+    };
+
+
+
+  /*
+  =========================================
+  RETIRER PANIER
+  =========================================
+  */
+
+  const retirerDuPanier =
+    (produitId) => {
+
+      setPanier(
+        (ancienPanier) =>
+
+          ancienPanier.filter(
+
+            (item) =>
+
+              String(
+                item.produitId
+              ) !==
+              String(
+                produitId
+              )
+
+          )
+
+      );
+
+    };
+
+
+
+  /*
+  =========================================
+  MODIFIER QUANTITE PANIER
+  =========================================
+  */
+
+  const modifierQuantitePanier =
+    (
+      produitId,
+      quantite
+    ) => {
+
+
+      /*
+      ==============================
+      QUANTITE ZERO
+      ==============================
+      */
+
+      if (
+        quantite <= 0
+      ) {
+
+        retirerDuPanier(
+          produitId
+        );
+
+        return;
+
+      }
+
+
+      /*
+      ==============================
+      VERIFIER PRODUIT
+      ==============================
+      */
+
+      const produit =
+        produits.find(
+
+          (p) =>
+
+            String(
+              p.id
+            ) ===
+            String(
+              produitId
+            )
+
+        );
+
+
+      /*
+      ==============================
+      VERIFIER STOCK
+      ==============================
+      */
+
+      if (
+
+        produit &&
+
+        Number(
+          quantite
+        ) >
+
+        Number(
+          produit.stock
+        )
+
+      ) {
+
+        toast.error(
+
+          `Stock insuffisant (Maximum : ${produit.stock})`
+
+        );
+
+        return;
+
+      }
+
+
+      /*
+      ==============================
+      MODIFIER PANIER
+      ==============================
+      */
+
+      setPanier(
+
+        (ancienPanier) =>
+
+          ancienPanier.map(
+
+            (item) =>
+
+              String(
+                item.produitId
+              ) ===
+              String(
+                produitId
+              )
+
+                ? {
+
+                    ...item,
+
+                    quantite:
+                      Number(
+                        quantite
+                      ),
+
+                    total:
+
+                      Number(
+                        quantite
+                      )
+
+                      *
+
+                      Number(
+                        item.prix
+                      )
+
+                  }
+
+                : item
+
+          )
+
+      );
+
+    };
+
+
+
+  /*
+  =========================================
+  VIDER PANIER
+  =========================================
+  */
+
+  const viderPanier =
+    () => {
+
+      setPanier([]);
+
+    };
+
+
+
+  /*
+  =========================================
+  FINALISER VENTE
+  =========================================
+  */
+
+  const finaliserVente =
+    async (
+      methodePaiement =
+        "especes"
+    ) => {
+
+
+      /*
+      ==============================
+      VERIFIER PANIER
+      ==============================
+      */
+
+      if (
+        panier.length === 0
+      ) {
+
+        toast.error(
+          "Le panier est vide"
+        );
+
+        return null;
+
+      }
+
+
+      try {
+
+
+        /*
+        ==============================
+        ENVOYER VENTE AU BACKEND
+        ==============================
+        */
+
+        const response =
+          await fetch(
+
+            `${API_URL}/sales.php`,
+
+            {
+
+              method:
+                "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json"
+
+              },
+
+              body:
+
+                JSON.stringify({
+
+                  items:
+                    panier,
+
+                  paymentMethod:
+                    methodePaiement
+
+                })
+
+            }
+
+          );
+
+
+        /*
+        ==============================
+        LIRE REPONSE
+        ==============================
+        */
+
+        const result =
+          await response.json();
+
+
+        console.log(
+          "Réponse vente :",
+          result
+        );
+
+
+        /*
+        ==============================
+        VERIFIER ERREUR
+        ==============================
+        */
+
+        if (
+          !result.success
+        ) {
+
+          toast.error(
+
+            result.message ||
+
+            "Erreur lors de la vente"
+
+          );
+
+          return null;
+
+        }
+
+
+        /*
+        ==============================
+        RECUPERER ID FACTURE
+        ==============================
+        */
+
+        const factureId =
+          result.sale.id;
+
+
+        /*
+        ==============================
+        CREER FACTURE FRONTEND
+        ==============================
+        */
+
+        const nouvelleFacture = {
+
+          id:
+            factureId,
+
+          date:
+            new Date().toISOString(),
+
+          items:
+            [...panier],
+
+          subtotal:
+            Number(
+              result.sale.subtotal
+            ),
+
+          tax:
+            Number(
+              result.sale.tax
+            ),
+
+          total:
+            Number(
+              result.sale.total
+            ),
+
+          paymentMethod:
+            result.sale.paymentMethod,
+
+          statut:
+            result.sale.status
+
+        };
+
+
+        /*
+        ==============================
+        AJOUTER FACTURE LOCAL
+        ==============================
+        */
+
+        setFactures(
+
+          (anciennesFactures) => [
+
+            nouvelleFacture,
+
+            ...anciennesFactures
+
+          ]
+
+        );
+
+
+        /*
+        ==============================
+        VIDER PANIER
+        ==============================
+        */
+
+        setPanier([]);
+
+
+        /*
+        ==============================
+        RECHARGER PRODUITS
+        STOCK MIS A JOUR
+        ==============================
+        */
+
+        await chargerProduits();
+
+
+        /*
+        ==============================
+        MESSAGE
+        ==============================
+        */
+
+        toast.success(
+
+          "Vente terminée avec succès !"
+
+        );
+
+
+        /*
+        ==============================
+        RETOURNER ID
+        ==============================
+        */
+
+        return factureId;
+
+
+      } catch (
+        error
+      ) {
+
+
+        console.error(
+
+          "Erreur finalisation vente :",
+
+          error
+
+        );
+
+
+        toast.error(
+
+          "Impossible de finaliser la vente"
+
+        );
+
+
+        return null;
+
+      }
+
+    };
+
+
+
+  /*
+  =========================================
+  PROVIDER
+  =========================================
+  */
 
   return (
-    <StoreContext.Provider value={{
-      produits, factures, panier,
-      ajouterProduit, modifierProduit, supprimerProduit,
-      ajouterAuPanier, retirerDuPanier, modifierQuantitePanier, viderPanier,
-      finaliserVente, estEnLigne,
-    }}>
+
+    <StoreContext.Provider
+
+      value={{
+
+        /*
+        -------------------------
+        DONNEES
+        -------------------------
+        */
+
+        produits,
+
+        factures,
+
+        panier,
+
+        estEnLigne,
+
+        chargementProduits,
+
+        chargementFactures,
+
+
+        /*
+        -------------------------
+        PRODUITS
+        -------------------------
+        */
+
+        chargerProduits,
+
+        ajouterProduit,
+
+        modifierProduit,
+
+        supprimerProduit,
+
+
+        /*
+        -------------------------
+        PANIER
+        -------------------------
+        */
+
+        ajouterAuPanier,
+
+        retirerDuPanier,
+
+        modifierQuantitePanier,
+
+        viderPanier,
+
+
+        /*
+        -------------------------
+        VENTES
+        -------------------------
+        */
+
+        chargerFactures,
+
+        finaliserVente
+
+      }}
+
+    >
+
       {children}
+
     </StoreContext.Provider>
+
   );
+
 }
 
-export const useStore = () => {
-  const contexte = useContext(StoreContext);
-  if (!contexte) throw new Error('useStore doit être utilisé dans un StoreProvider');
-  return contexte;
-};
+
+
+/*
+=========================================
+CUSTOM HOOK
+=========================================
+*/
+
+export const useStore =
+  () => {
+
+
+    const contexte =
+
+      useContext(
+        StoreContext
+      );
+
+
+    if (
+      !contexte
+    ) {
+
+      throw new Error(
+
+        "useStore doit être utilisé dans un StoreProvider"
+
+      );
+
+    }
+
+
+    return contexte;
+
+  };

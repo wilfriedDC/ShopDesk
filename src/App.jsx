@@ -1,44 +1,78 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/useAuth';
-import Login from './pages/Login';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Caisse from './pages/Caisse';
-import Produit_stock from './pages/Produit_stock';
-import Facture from './pages/Factures';
-import Settings from './pages/Parametre';
-import { StoreProvider } from './context/storeContext';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 
-// Protège les routes — redirige vers /login si non connecté
-const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
-};
+import Login from "./pages/Login";
+import Layout from "./components/Layout";
+
+import Dashboard from "./pages/Dashboard";
+import Caisse from "./pages/Caisse";
+import Produit_stock from "./pages/Produit_stock";
+import Facture from "./pages/Factures";
+import Settings from "./pages/Parametre";
+
+import { StoreProvider } from "./context/storeContext";
 
 const App = () => {
   return (
     <StoreProvider>
       <Routes>
+
+        {/* Page de connexion */}
         <Route path="/login" element={<Login />} />
 
-        <Route path="/" element={
-          <ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>
-        } />
-        <Route path="/caisse" element={
-          <ProtectedRoute><Layout><Caisse /></Layout></ProtectedRoute>
-        } />
-        <Route path="/facture" element={
-          <ProtectedRoute><Layout><Facture /></Layout></ProtectedRoute>
-        } />
-        <Route path="/produit" element={
-          <ProtectedRoute><Layout><Produit_stock /></Layout></ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>
-        } />
+        {/* Tableau de bord */}
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
 
-        <Route path="*" element={<Navigate to="/login" />} />
+        {/* Caisse */}
+        <Route
+          path="/caisse"
+          element={
+            <Layout>
+              <Caisse />
+            </Layout>
+          }
+        />
+
+        {/* Factures */}
+        <Route
+          path="/facture"
+          element={
+            <Layout>
+              <Facture />
+            </Layout>
+          }
+        />
+
+        {/* Produits */}
+        <Route
+          path="/produit"
+          element={
+            <Layout>
+              <Produit_stock />
+            </Layout>
+          }
+        />
+
+        {/* Paramètres */}
+        <Route
+          path="/settings"
+          element={
+            <Layout>
+              <Settings />
+            </Layout>
+          }
+        />
+
+        {/* Route inconnue */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </StoreProvider>
   );

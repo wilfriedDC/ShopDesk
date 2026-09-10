@@ -39,14 +39,33 @@ export default function Caisse() {
 
   const totalPanier = (panier || []).reduce((somme, item) => somme + item.total, 0);
 
-  const gererEncaissement = () => {
-    if (panier.length === 0) return;
-    if (confirm(`Confirmer le paiement de ${(totalPanier * 1.2).toFixed(2)} Ar ?`)) {
-      const factureId = finaliserVente();
-      if (factureId) {
-        setDerniereFactureId(factureId);
-      }
+  const gererEncaissement = async () => {
+
+  if (panier.length === 0) return;
+
+  const totalTTC = totalPanier * 1.2;
+
+  if (
+    confirm(
+      `Confirmer le paiement de ${totalTTC.toFixed(2)} Ar ?`
+    )
+  ) {
+
+    const factureId =
+      await finaliserVente(
+        methodePaiement
+      );
+
+    if (factureId) {
+
+      setDerniereFactureId(
+        factureId
+      );
+
     }
+
+  }
+
   };
 
   if (derniereFactureId) {
